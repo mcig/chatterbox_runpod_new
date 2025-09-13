@@ -66,6 +66,19 @@ def preload_models():
     try:
         print("Pre-loading models to RunPod volume...")
         print(f"Cache directory: {HF_CACHE_DIR}")
+        print(f"HF_HOME environment variable: {os.environ.get('HF_HOME')}")
+        print(f"TRANSFORMERS_CACHE environment variable: {os.environ.get('TRANSFORMERS_CACHE')}")
+        print(f"HF_HUB_CACHE environment variable: {os.environ.get('HF_HUB_CACHE')}")
+        
+        # Check if RunPod volume exists and is writable
+        if os.path.exists(RUNPOD_VOLUME_PATH):
+            print(f"✓ RunPod volume exists at: {RUNPOD_VOLUME_PATH}")
+            if os.access(RUNPOD_VOLUME_PATH, os.W_OK):
+                print("✓ RunPod volume is writable")
+            else:
+                print("✗ RunPod volume is not writable")
+        else:
+            print(f"✗ RunPod volume does not exist at: {RUNPOD_VOLUME_PATH}")
         
         # Check disk space before downloading
         free_space = check_disk_space()
@@ -75,19 +88,36 @@ def preload_models():
         # Pre-download English TTS model files
         print("Downloading English TTS model...")
         ChatterboxTTS.from_pretrained(device="cpu")  # Use CPU for pre-loading
+        print("✓ English TTS model downloaded")
         
         # Pre-download Multilingual TTS model
         print("Downloading Multilingual TTS model...")
         ChatterboxMultilingualTTS.from_pretrained(device="cpu")  # Use CPU for pre-loading
+        print("✓ Multilingual TTS model downloaded")
         
         # Pre-download Voice Cloning model
         print("Downloading Voice Cloning model...")
         ChatterboxVC.from_pretrained(device="cpu")  # Use CPU for pre-loading
+        print("✓ Voice Cloning model downloaded")
+        
+        # Check what's actually in the cache directory
+        if os.path.exists(HF_CACHE_DIR):
+            cache_contents = os.listdir(HF_CACHE_DIR)
+            print(f"Cache directory contents: {cache_contents}")
+            for item in cache_contents:
+                item_path = os.path.join(HF_CACHE_DIR, item)
+                if os.path.isdir(item_path):
+                    size = sum(os.path.getsize(os.path.join(dirpath, filename))
+                              for dirpath, dirnames, filenames in os.walk(item_path)
+                              for filename in filenames)
+                    print(f"  {item}/ - {size//1024//1024:.1f}MB")
         
         print("Model pre-loading completed successfully!")
         
     except Exception as e:
         print(f"Warning: Model pre-loading failed: {e}")
+        import traceback
+        traceback.print_exc()
         print("Models will be downloaded on-demand during requests.")
 
 if torch.cuda.is_available():

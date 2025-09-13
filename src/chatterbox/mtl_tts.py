@@ -199,6 +199,7 @@ class ChatterboxMultilingualTTS:
                 revision="main", 
                 allow_patterns=["ve.pt", "t3_23lang.safetensors", "s3gen.pt", "mtl_tokenizer.json", "conds.pt", "Cangjie5_TC.json"],
                 token=os.getenv("HF_TOKEN"),
+                cache_dir=os.getenv("HF_HOME", os.path.expanduser("~/.cache/huggingface"))
             )
         )
         return cls.from_local(ckpt_dir, device)

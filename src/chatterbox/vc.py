@@ -69,7 +69,11 @@ class ChatterboxVC:
             device = "cpu"
             
         for fpath in ["s3gen.safetensors", "conds.pt"]:
-            local_path = hf_hub_download(repo_id=REPO_ID, filename=fpath)
+            local_path = hf_hub_download(
+                repo_id=REPO_ID, 
+                filename=fpath,
+                cache_dir=os.getenv("HF_HOME", os.path.expanduser("~/.cache/huggingface"))
+            )
 
         return cls.from_local(Path(local_path).parent, device)
 
