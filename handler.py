@@ -43,16 +43,24 @@ from chatterbox.vc import ChatterboxVC
 
 # Configure Hugging Face cache to use RunPod volume
 RUNPOD_VOLUME_PATH = "/runpod-volume"
-HF_CACHE_DIR = os.path.join(RUNPOD_VOLUME_PATH, ".cache", "huggingface")
-print(f"Using RunPod volume for model cache: {HF_CACHE_DIR}")
 
-# Create cache directory if it doesn't exist
-os.makedirs(HF_CACHE_DIR, exist_ok=True)
+def setup_huggingface_cache():
+    """Setup Hugging Face cache directory and environment variables."""
+    HF_CACHE_DIR = os.path.join(RUNPOD_VOLUME_PATH, ".cache", "huggingface")
+    print(f"Using RunPod volume for model cache: {HF_CACHE_DIR}")
 
-# Set Hugging Face cache environment variable
-os.environ["HF_HOME"] = HF_CACHE_DIR
-os.environ["TRANSFORMERS_CACHE"] = HF_CACHE_DIR
-os.environ["HF_HUB_CACHE"] = HF_CACHE_DIR
+    # Create cache directory if it doesn't exist
+    os.makedirs(HF_CACHE_DIR, exist_ok=True)
+
+    # Set Hugging Face cache environment variable
+    os.environ["HF_HOME"] = HF_CACHE_DIR
+    os.environ["TRANSFORMERS_CACHE"] = HF_CACHE_DIR
+    os.environ["HF_HUB_CACHE"] = HF_CACHE_DIR
+    
+    return HF_CACHE_DIR
+
+# Initialize Hugging Face cache
+HF_CACHE_DIR = setup_huggingface_cache()
 
 def check_disk_space(path="/"):
     """Check available disk space."""
