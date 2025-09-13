@@ -53,10 +53,19 @@ RUN python -m pip install resemble-perth || \
 RUN python -m pip install -e . --no-deps || \
     echo "Package installation completed with warnings"
 
-# Set environment variables
+# Set environment variables for RunPod volume
 ENV HF_HUB_ENABLE_HF_TRANSFER=1
+ENV HF_HOME=/runpod-volume/.cache/huggingface
+ENV TRANSFORMERS_CACHE=/runpod-volume/.cache/huggingface
+ENV HF_HUB_CACHE=/runpod-volume/.cache/huggingface
 
 ENV PYTHONPATH=/workspace/src:$PYTHONPATH
+
+# Create RunPod volume cache directory
+RUN mkdir -p /runpod-volume/.cache/huggingface
+
+# Clean up package cache to free space
+RUN apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # Run the handler  
 CMD python -u /workspace/handler.py

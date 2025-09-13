@@ -41,6 +41,55 @@ from chatterbox.tts import ChatterboxTTS
 from chatterbox.mtl_tts import ChatterboxMultilingualTTS
 from chatterbox.vc import ChatterboxVC
 
+# Configure Hugging Face cache to use RunPod volume
+RUNPOD_VOLUME_PATH = "/runpod-volume"
+HF_CACHE_DIR = os.path.join(RUNPOD_VOLUME_PATH, ".cache", "huggingface")
+print(f"Using RunPod volume for model cache: {HF_CACHE_DIR}")
+
+# Create cache directory if it doesn't exist
+os.makedirs(HF_CACHE_DIR, exist_ok=True)
+
+# Set Hugging Face cache environment variable
+os.environ["HF_HOME"] = HF_CACHE_DIR
+os.environ["TRANSFORMERS_CACHE"] = HF_CACHE_DIR
+os.environ["HF_HUB_CACHE"] = HF_CACHE_DIR
+
+def check_disk_space(path="/"):
+    """Check available disk space."""
+    import shutil
+    total, used, free = shutil.disk_usage(path)
+    print(f"Disk space - Total: {total//1024//1024//1024:.1f}GB, Used: {used//1024//1024//1024:.1f}GB, Free: {free//1024//1024//1024:.1f}GB")
+    return free
+
+def preload_models():
+    """Pre-download models to RunPod volume to avoid runtime downloads."""
+    try:
+        print("Pre-loading models to RunPod volume...")
+        print(f"Cache directory: {HF_CACHE_DIR}")
+        
+        # Check disk space before downloading
+        free_space = check_disk_space()
+        if free_space < 3 * 1024**3:  # Less than 3GB
+            print(f"Warning: Only {free_space//1024//1024//1024:.1f}GB free space available. Model downloads may fail.")
+        
+        # Pre-download English TTS model files
+        print("Downloading English TTS model...")
+        ChatterboxTTS.from_pretrained(device="cpu")  # Use CPU for pre-loading
+        
+        # Pre-download Multilingual TTS model
+        print("Downloading Multilingual TTS model...")
+        ChatterboxMultilingualTTS.from_pretrained(device="cpu")  # Use CPU for pre-loading
+        
+        # Pre-download Voice Cloning model
+        print("Downloading Voice Cloning model...")
+        ChatterboxVC.from_pretrained(device="cpu")  # Use CPU for pre-loading
+        
+        print("Model pre-loading completed successfully!")
+        
+    except Exception as e:
+        print(f"Warning: Model pre-loading failed: {e}")
+        print("Models will be downloaded on-demand during requests.")
+
 if torch.cuda.is_available():
     device = "cuda"
 elif torch.backends.mps.is_available():
@@ -261,5 +310,8 @@ def handle_voice_clone(job_input):
                     os.unlink(temp_path)
                 except:
                     pass  # Ignore cleanup errors
+
+# Pre-load models on startup
+preload_models()
 
 runpod.serverless.start({"handler": handler})
