@@ -108,6 +108,8 @@ _models = {
 
 def get_model(language_id=None, mode="tts"):
     """Lazy load models based on language requirement and mode."""
+    print(f"DEBUG: get_model called with language_id={language_id}, mode={mode}")
+    
     if mode == "voice_clone":
         # Use voice cloning model
         if _models["voice_clone"] is None:
@@ -116,12 +118,14 @@ def get_model(language_id=None, mode="tts"):
         return _models["voice_clone"], "voice_clone"
     elif language_id is None or language_id == "en":
         # Use English model
+        print(f"DEBUG: Using English model (language_id={language_id})")
         if _models["english"] is None:
             print("Loading English TTS model...")
             _models["english"] = ChatterboxTTS.from_pretrained(device=device)
         return _models["english"], "english"
     else:
         # Use multilingual model
+        print(f"DEBUG: Using Multilingual model (language_id={language_id})")
         if _models["multilingual"] is None:
             print("Loading Multilingual TTS model...")
             _models["multilingual"] = ChatterboxMultilingualTTS.from_pretrained(device=device)
@@ -160,12 +164,15 @@ def handle_tts(job_input):
 
     # Multilingual support
     language_id = job_input.get("language_id", None)  # None defaults to English
+    print(f"DEBUG: Received language_id: {language_id}, type: {type(language_id)}")
     
     # Voice cloning support for TTS
     voice_sample_base64 = job_input.get("voice_sample_base64", None)
+    print(f"DEBUG: Voice cloning enabled: {voice_sample_base64 is not None}")
     
     # Get the appropriate model based on language
     model, model_type = get_model(language_id, mode="tts")
+    print(f"DEBUG: Selected model type: {model_type}")
     
     # Handle audio prompt (voice sample) if provided
     audio_prompt_path = job_input.get("audio_prompt_path", None)  # File path (legacy support)
